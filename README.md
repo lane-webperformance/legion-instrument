@@ -7,11 +7,15 @@ promise.
 instrument(fn, tags)
 --------------------
 
-Returns an [Io](https://github.com/lane-webperformance/legion-io) that wraps
-the specified function. When calling Io.run(), the carried state must be a
+Returns a function that accepts exactly the same arguments as fn.
+
+The wrapped function returns an
+[Io](https://github.com/lane-webperformance/legion-io), allowing
+the run time of the operation to be measured ("instrumented").
+When calling Io.run(), the carried state must be a
 [MetricsReceiver](https://github.com/lane-webperformance/legion-metrics).
 
-* fn: any function that returns a promise, or another Io.
+* fn: any function that returns a promise. fn might also be an Io.
 * tags: an array of any
 [tags](https://github.com/lane-webperformance/legion-metrics).
 
