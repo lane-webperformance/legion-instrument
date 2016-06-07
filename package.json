@@ -10,7 +10,7 @@
   "author": "Christopher Lane Hinson <lane@webperformance.com>",
   "license": "APSL-2.0",
   "dependencies": {
-    "legion-io": "https://github.com/lane-webperformance/legion-io.git#v0.0.4",
+    "legion-io": "https://github.com/lane-webperformance/legion-io.git#v0.0.5",
     "legion-metrics": "https://github.com/lane-webperformance/legion-metrics.git#v0.0.4"
   },
   "devDependencies": {
