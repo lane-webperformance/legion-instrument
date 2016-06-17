@@ -1,40 +1,41 @@
+'use strict';
 
-var Io = require('legion-io');
-var metrics = require('legion-metrics');
-
-function instrumentFunction(fn, tags) {
-  return function() {
-    var delayed_arguments = arguments;
-
-    return Io.get().chain(function(metrics_receiver) {
-      if( !metrics.Target.isReceiver(metrics_receiver) )
-        throw new Error('Io this context is not a MetricsReceiver: ' + metrics_receiver);
-
-      if( typeof tags !== 'undefined' )
-        metrics_receiver = metrics_receiver.tag(tags);
-
-      var start = Date.now();
-
-      return Promise.resolve(fn.apply(this,delayed_arguments)).then(function(result) {
-        metrics_receiver.tag(metrics.tags.outcome.success).receive(metrics.sample(Date.now() - start));
-        return result;
-      }).catch(function(problem) {
-        metrics_receiver.tag(metrics.tags.outcome.failure).receive(metrics.sample(Date.now() - start));
-        throw problem;
-      });
-    });
-  };
-}
-
-function instrumentIo(io, tags) {
-  return function() {
-    return Io.get().chain(instrumentFunction(io.unwrap(), tags));
-  };
-}
+const Io = require('legion-io');
+const metrics = require('legion-metrics');
 
 module.exports = function(fn, tags) {
-  if( Io.isIo(fn) )
-    return instrumentIo(fn, tags);
-  else
-    return instrumentFunction(fn, tags);
+  return Io.get().chain(metrics_receiver => {
+    if( !metrics.Target.isReceiver(metrics_receiver) )
+      throw new Error('Io this context is not a MetricsReceiver: ' + metrics_receiver);
+
+    if( typeof tags !== 'undefined' )
+      metrics_receiver = metrics_receiver.tag(tags);
+
+    const start = Date.now();
+
+    return Io.of().chain(fn)
+      .chain(result => {
+        metrics_receiver.tag(metrics.tags.outcome.success).receive(metrics.sample({ duration: {
+          value: Date.now() - start,
+          unit: 'milliseconds',
+          interpretation: 'The time needed to complete an operation.' }}));
+        return Io.of(result);
+      }).catch(problem => {
+        metrics_receiver.tag(metrics.tags.outcome.failure).receive(metrics.sample({ duration: {
+          value: Date.now() - start,
+          unit: 'milliseconds',
+          interpretation: 'The time needed to complete an operation.' }}));
+        throw problem;
+      });
+  });
+};
+
+module.exports.byTags = function(tags) {
+  return fn => module.exports(fn,tags);
+};
+
+module.exports.wrap = function(fn, tags) {
+  return function() {
+    return module.exports(() => fn.apply(this,arguments), tags);
+  };
 };
