@@ -47,8 +47,9 @@ describe('The auto instrument function', function() {
 
     instrument(returnOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); })).then(function(result) {
       expect(result).toBe(5);
-      expect(target.get().get('values').get('duration').get('$avg').get('avg')).toBeGreaterThan(2000);
-      expect(target.get().get('values').get('duration').get('$avg').get('avg')).toBeLessThan(3000);
+      const metrics = JSON.parse(JSON.stringify(target.get()));
+      expect(metrics.values.duration.$avg.avg).toBeGreaterThan(2000);
+      expect(metrics.values.duration.$avg.avg).toBeLessThan(2100);
       done();
     }).catch(done.fail);
   });
@@ -62,14 +63,16 @@ describe('The auto instrument function', function() {
 
     const target = metrics.Target.create(metrics.merge);
 
-    instrument(throwOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); })).then(function(result) {
-      done.fail(result);
-    }).catch(function(err) {
-      expect(err.message).toBe('the quick brown fox jumped over the lazy dog');
-      expect(target.get().get('values').get('duration').get('$avg').get('avg')).toBeGreaterThan(2000);
-      expect(target.get().get('values').get('duration').get('$avg').get('avg')).toBeLessThan(3000);
-      done();
-    });
+    instrument(throwOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); }))
+      .then(done.fail)
+      .catch(function(err) {
+        expect(err.message).toBe('the quick brown fox jumped over the lazy dog');
+        const metrics = JSON.parse(JSON.stringify(target.get()));
+        expect(metrics.values.duration.$avg.avg).toBeGreaterThan(2000);
+        expect(metrics.values.duration.$avg.avg).toBeLessThan(2100);
+        done();
+      })
+      .catch(done.fail);
   });
 
   it('demands a MetricsReceiver as the state carried by the Io', function(done) {
@@ -94,7 +97,8 @@ describe('The auto instrument function', function() {
     const target = metrics.Target.create(metrics.merge);
     
     iDontCare.run(target.receiver()).then(function() {
-      expect(target.get().get('tags').get('protocol').get('foo').get('values').get('duration').get('$avg').get('size')).toBe(1);
+      const metrics = JSON.parse(JSON.stringify(target.get()));
+      expect(metrics.tags.protocol.foo.values.duration.$avg.size).toBe(1);
       done();
     }).catch(done.fail);
   });
@@ -109,7 +113,8 @@ describe('The auto instrument function', function() {
     const target = metrics.Target.create(metrics.merge);
     
     fooProtocol(iDontCare).run(target.receiver()).then(function() {
-      expect(target.get().get('tags').get('protocol').get('foo').get('values').get('duration').get('$avg').get('size')).toBe(1);
+      const metrics = JSON.parse(JSON.stringify(target.get()));
+      expect(metrics.tags.protocol.foo.values.duration.$avg.size).toBe(1);
       done();
     }).catch(done.fail);
   });
@@ -127,8 +132,9 @@ describe('The auto instrument function', function() {
     
     addable(100,200,300,400).run(target.receiver().tag(x => x.summarize())).then(result => {
       expect(result).toBe(500);
-      expect(target.get().get('values').get('duration').get('$avg').get('avg')).toBeGreaterThan(950);
-      expect(target.get().get('values').get('duration').get('$avg').get('avg')).not.toBeGreaterThan(1050);
+      const metrics = JSON.parse(JSON.stringify(target.get()));
+      expect(metrics.values.duration.$avg.avg).toBeGreaterThan(950);
+      expect(metrics.values.duration.$avg.avg).not.toBeGreaterThan(1050);
       done();
     }).catch(function(err) {
       done.fail(err);
