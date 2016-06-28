@@ -11,20 +11,24 @@ module.exports = function(fn, tags) {
     if( typeof tags !== 'undefined' )
       metrics_receiver = metrics_receiver.tag(tags);
 
-    const start = Date.now();
+    const begin = Date.now();
 
     return Io.of().chain(fn)
       .chain(result => {
-        metrics_receiver.tag(metrics.tags.outcome.success).receive(metrics.sample({ duration: {
-          value: Date.now() - start,
-          unit: 'milliseconds',
-          interpretation: 'The time needed to complete an operation.' }}));
+        const end = Date.now();
+        metrics_receiver.tag(metrics.tags.outcome.success).receive(metrics.sample({
+          duration: metrics.sample.duration(end-begin),
+          beginning_timestamp: metrics.sample.timestamp(begin),
+          ending_timestamp: metrics.sample.timestamp(end)
+        }));
         return Io.of(result);
       }).catch(problem => {
-        metrics_receiver.tag(metrics.tags.outcome.failure).receive(metrics.sample({ duration: {
-          value: Date.now() - start,
-          unit: 'milliseconds',
-          interpretation: 'The time needed to complete an operation.' }}));
+        const end = Date.now();
+        metrics_receiver.tag(metrics.tags.outcome.failure).receive(metrics.sample({
+          duration: metrics.sample.duration(end-begin),
+          beginning_timestamp: metrics.sample.timestamp(begin),
+          ending_timestamp: metrics.sample.timestamp(end)
+        }));
         throw problem;
       });
   });

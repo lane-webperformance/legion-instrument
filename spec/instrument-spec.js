@@ -48,8 +48,12 @@ describe('The auto instrument function', function() {
     instrument(returnOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); })).then(function(result) {
       expect(result).toBe(5);
       const metrics = JSON.parse(JSON.stringify(target.get()));
-      expect(metrics.values.duration.$avg.avg).toBeGreaterThan(2000);
+      expect(metrics.values.duration.$avg.avg).toBeGreaterThan(1900);
       expect(metrics.values.duration.$avg.avg).toBeLessThan(2100);
+      expect(metrics.values.beginning_timestamp.$avg.avg).toBeGreaterThan(Date.now()-2100);
+      expect(metrics.values.beginning_timestamp.$avg.avg).toBeLessThan(Date.now()-1900);
+      expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
+      expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
       done();
     }).catch(done.fail);
   });
@@ -70,6 +74,10 @@ describe('The auto instrument function', function() {
         const metrics = JSON.parse(JSON.stringify(target.get()));
         expect(metrics.values.duration.$avg.avg).toBeGreaterThan(2000);
         expect(metrics.values.duration.$avg.avg).toBeLessThan(2100);
+        expect(metrics.values.beginning_timestamp.$avg.avg).toBeGreaterThan(Date.now()-2100);
+        expect(metrics.values.beginning_timestamp.$avg.avg).toBeLessThan(Date.now()-1900);
+        expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
+        expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
         done();
       })
       .catch(done.fail);
