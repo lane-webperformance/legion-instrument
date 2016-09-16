@@ -144,9 +144,24 @@ describe('The auto instrument function', function() {
       expect(metrics.values.duration.$avg.avg).toBeGreaterThan(950);
       expect(metrics.values.duration.$avg.avg).not.toBeGreaterThan(1050);
       done();
-    }).catch(function(err) {
-      done.fail(err);
-    });
+    }).catch(done.fail);
   });
 
+  it('supports wrapping all methods in an object', function(done) {
+    const example = {
+      _count : 2,
+      inc : function() { return Promise.resolve(this._count++); }
+    };
+
+    const wrapped = instrument.wrapAll(example);
+
+    const target = metrics.Target.create(metrics.merge);
+
+    wrapped.inc().chain(wrapped.inc()).run(target.receiver()).then(result => {
+      expect(result).toBe(3);
+      expect(example._count).toBe(4);
+      expect(wrapped._count).toBe(2);
+      done();
+    }).catch(done.fail);
+  });
 });

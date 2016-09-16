@@ -3,7 +3,7 @@
 const Io = require('legion-io');
 const metrics = require('legion-metrics');
 
-module.exports = function(fn, tags) {
+function instrument(fn, tags) {
   return Io.get().chain(metrics_receiver => {
     if( !metrics.Target.isReceiver(metrics_receiver) )
       throw new Error('Io this context is not a MetricsReceiver: ' + metrics_receiver);
@@ -32,14 +32,27 @@ module.exports = function(fn, tags) {
         throw problem;
       });
   });
-};
+}
+
+module.exports = instrument;
 
 module.exports.byTags = function(tags) {
-  return fn => module.exports(fn,tags);
+  return fn => instrument(fn,tags);
 };
 
 module.exports.wrap = function(fn, tags) {
   return function() {
-    return module.exports(() => fn.apply(this,arguments), tags);
+    return instrument(() => fn.apply(this,arguments), tags);
   };
 };
+
+module.exports.wrapAll = function(obj, tags) {
+  const result = {};
+
+  for( const key in obj ) {
+    result[key] = typeof obj[key] === 'function' ? instrument.wrap(obj[key], tags).bind(obj) : obj[key];
+  }
+
+  return result;
+};
+

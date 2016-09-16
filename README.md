@@ -22,3 +22,30 @@ When calling Io.run(), the carried state must be a
 * tags: an array of any
 [tags](https://github.com/lane-webperformance/legion-metrics).
 
+instrument.byTags(tags)
+-----------------------
+
+Returns a function that instruments other functions with the given
+tags. The following are equivalent:
+
+	instrument(fn, tags)
+
+	instrument.byTags(tags)(fn)
+
+instrument.wrap(fn,tags)
+------------------------
+
+Works exactly like instrument(fn,tags), except the result is a function,
+not an Io, which may be called with same parameters as the original. This
+is a way of quickly converting a promise-based function to work with
+Legion.
+
+instrument.wrapAll(obj,tags)
+----------------------------
+
+Wraps all methods of an object, returning a new object. Any member of the
+input that is not a function will be shallow-copied as-is.
+
+This may be a fast way to convert a large promise-based API to play well
+with Legion.
+
