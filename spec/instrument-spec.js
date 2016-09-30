@@ -58,6 +58,31 @@ describe('The auto instrument function', function() {
     }).catch(done.fail);
   });
 
+  it('accepts extra sample data when measuring the time it takes an operation to succeed', function(done) {
+    const returnOnDelay = function() {
+      return new Promise(function(resolve) {
+        setTimeout(function() { resolve(instrument.return(5, {
+          woofs: {
+            value: 7,
+            units: 'megabarks',
+            interpretation: 'Sample statistic suggesting puppies.'
+          }
+        })); }, 2000);
+      });
+    };
+
+    const target = metrics.Target.create(metrics.merge);
+
+    instrument(returnOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); })).then(function(result) {
+      expect(result).toBe(5);
+      const metrics = JSON.parse(JSON.stringify(target.get()));
+      expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
+      expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
+      expect(metrics.values.woofs.$avg.avg).toBe(7);
+      done();
+    }).catch(done.fail);
+  });
+
   it('measures the time it takes an operation to fail', function(done) {
     const throwOnDelay = function() {
       return new Promise(function(_,reject) {
@@ -78,6 +103,34 @@ describe('The auto instrument function', function() {
         expect(metrics.values.beginning_timestamp.$avg.avg).toBeLessThan(Date.now()-1900);
         expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
         expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
+        done();
+      })
+      .catch(done.fail);
+  });
+
+  it('accepts extra sample data when measuring the time it takes an operation to fail', function(done) {
+    const throwOnDelay = function() {
+      return new Promise(function(_,reject) {
+        setTimeout(function() { reject(instrument.return(new Error('the quick brown fox jumped over the lazy dog'), {
+          woofs: {
+            value: 7,
+            units: 'megabarks',
+            interpretation: 'Sample statistic suggesting puppies.'
+          }
+        })); }, 2000);
+      });
+    };
+
+    const target = metrics.Target.create(metrics.merge);
+
+    instrument(throwOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); }))
+      .then(done.fail)
+      .catch(function(err) {
+        expect(err.message).toBe('the quick brown fox jumped over the lazy dog');
+        const metrics = JSON.parse(JSON.stringify(target.get()));
+        expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
+        expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
+        expect(metrics.values.woofs.$avg.avg).toBe(7);
         done();
       })
       .catch(done.fail);

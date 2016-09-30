@@ -22,6 +22,44 @@ When calling Io.run(), the carried state must be a
 * tags: an array of any
 [tags](https://github.com/lane-webperformance/legion-metrics).
 
+instrument.return(value, sample\_data)
+--------------------------------------
+
+Use this method to return extra sample data from an instrumented
+function. Use it like this (where 'operation' is an imaginary API
+supporting two methods: finish() and getResourcesUsed()):
+
+	function foo(operation) {
+	  var result = operation.finish();
+          var resources_used = operation.getResourcesUsed();
+
+	  return instrument.return(result, {
+            resources_used: {
+              value: resources_used,
+              units: 'resources',
+              interpretation: 'Resources used to finish an operation.'
+            }
+          });
+	}
+
+Use of this mechanism is optional.
+
+instrument.return.failure(value, sample\_data)
+----------------------------------------------
+
+As instrument.return, but documents a failure. This can wrap
+either an exception or a return value.
+
+Use of this mechanism is optional.
+
+instrument.return.timeout(value, sample\_data)
+----------------------------------------------
+
+As instrument.return, but documents a timeout condition, (which is treated
+as separate from a success or failure).
+
+Use of this mechanism is optional.
+
 instrument.byTags(tags)
 -----------------------
 

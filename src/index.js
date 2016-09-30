@@ -2,6 +2,7 @@
 
 const Io = require('legion-io');
 const metrics = require('legion-metrics');
+const instReturn = require('./return');
 
 function instrument(fn, tags) {
   return Io.get().chain(metrics_receiver => {
@@ -12,29 +13,25 @@ function instrument(fn, tags) {
       metrics_receiver = metrics_receiver.tag(tags);
 
     const begin = Date.now();
+    const conclude = (result, default_outcome) => {
+      const end = Date.now();
+      metrics_receiver.tag(metrics.tags.outcome[instReturn.getOutcome(result, default_outcome)]).receive(metrics.sample(Object.assign({
+        duration: metrics.sample.duration(end-begin),
+        beginning_timestamp: metrics.sample.timestamp(begin),
+        ending_timestamp: metrics.sample.timestamp(end)
+      }, instReturn.getSampleData(result))));
+      return Io.of(instReturn.getReturnValue(result));
+    };
 
     return Io.of().chain(fn)
-      .chain(result => {
-        const end = Date.now();
-        metrics_receiver.tag(metrics.tags.outcome.success).receive(metrics.sample({
-          duration: metrics.sample.duration(end-begin),
-          beginning_timestamp: metrics.sample.timestamp(begin),
-          ending_timestamp: metrics.sample.timestamp(end)
-        }));
-        return Io.of(result);
-      }).catch(problem => {
-        const end = Date.now();
-        metrics_receiver.tag(metrics.tags.outcome.failure).receive(metrics.sample({
-          duration: metrics.sample.duration(end-begin),
-          beginning_timestamp: metrics.sample.timestamp(begin),
-          ending_timestamp: metrics.sample.timestamp(end)
-        }));
-        throw problem;
-      });
+      .catch(except => conclude(except,'failure').chain(x => { throw x; }))
+      .chain(result => conclude(result,'success'));
   });
 }
 
 module.exports = instrument;
+
+module.exports.return = instReturn;
 
 module.exports.byTags = function(tags) {
   return fn => instrument(fn,tags);
