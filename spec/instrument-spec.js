@@ -64,7 +64,7 @@ describe('The auto instrument function', function() {
         setTimeout(function() { resolve(instrument.return(5, {
           woofs: {
             value: 7,
-            units: 'megabarks',
+            unit: 'megabarks',
             interpretation: 'Sample statistic suggesting puppies.'
           }
         })); }, 2000);
@@ -114,7 +114,7 @@ describe('The auto instrument function', function() {
         setTimeout(function() { reject(instrument.return(new Error('the quick brown fox jumped over the lazy dog'), {
           woofs: {
             value: 7,
-            units: 'megabarks',
+            unit: 'megabarks',
             interpretation: 'Sample statistic suggesting puppies.'
           }
         })); }, 2000);

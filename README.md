@@ -26,28 +26,39 @@ instrument.return(value, sample\_data)
 --------------------------------------
 
 Use this method to return extra sample data from an instrumented
-function. Use it like this (where 'operation' is an imaginary API
-supporting two methods: finish() and getResourcesUsed()):
+function. As an example:
 
-	function foo(operation) {
-	  var result = operation.finish();
-          var resources_used = operation.getResourcesUsed();
+	function foo() {
+	  return asyncLoadResource().then(result => {
+            var custom_metrics = {
+              resource_size: {
+                value: result.size,
+                unit: 'bytes',
+                interpretation: 'Size of the resource.'
+              }
+            };
 
-	  return instrument.return(result, {
-            resources_used: {
-              value: resources_used,
-              units: 'resources',
-              interpretation: 'Resources used to finish an operation.'
-            }
+            if( result.status === 'ok' )
+              return instrument.return(result, custom_metrics);
+            else
+              return instrument.return.failure(result, custom_metrics);
           });
 	}
 
-Use of this mechanism is optional.
+Use of this mechanism is optional. It's also possible to throw
+a failure (you can also throw a timeout, or, indeed, even a success):
+
+	throw instrument.return.failure(new Error('something bad happened'), custom_metrics);
+
+instrument.return.success(value, sample\_data)
+----------------------------------------------
+
+Alias of instrument.return.
 
 instrument.return.failure(value, sample\_data)
 ----------------------------------------------
 
-As instrument.return, but documents a failure. This can wrap
+As instrument.return, but will be recorded as a failure. This can wrap 
 either an exception or a return value.
 
 Use of this mechanism is optional.
@@ -55,7 +66,7 @@ Use of this mechanism is optional.
 instrument.return.timeout(value, sample\_data)
 ----------------------------------------------
 
-As instrument.return, but documents a timeout condition, (which is treated
+As instrument.return, but will be recorded as a timeout condition, (which is treated
 as separate from a success or failure).
 
 Use of this mechanism is optional.

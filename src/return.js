@@ -1,11 +1,14 @@
 'use strict';
 
+// Possible outcomes.
 const OUTCOMES = {
   success: 'success',
   failure: 'failure',
   timeout: 'timeout'
 };
 
+// Base class of a RETURN object. RETURN objects annotate the result of a function
+// with additional metrics.
 const RETURN = {
   type: 'legion-instrument/instrumented-return-value',
   legion_instrumented_return_value: undefined,
@@ -20,6 +23,7 @@ module.exports = function(value, sample_data) {
   });
 };
 
+// Helper method to generate constructors for RETURN objects with the given outcomes.
 function withOutcome(outcome) {
   return function(value, sample_data) {
     return Object.assign(this(value, sample_data), {
