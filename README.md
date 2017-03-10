@@ -10,17 +10,14 @@ promise.
 instrument(fn, tags)
 --------------------
 
-Returns a function that accepts exactly the same arguments as fn.
+* fn: any function that returns a promise. Also accepted: a function that returns a plain value, a function that returns an Io, or an Io.
+* tags: an array of any [tags](https://github.com/lane-webperformance/legion-metrics).
 
-The wrapped function returns an
-[Io](https://github.com/lane-webperformance/legion-io), allowing
-the run time of the operation to be measured ("instrumented").
-When calling Io.run(), the carried state must be a
-[MetricsReceiver](https://github.com/lane-webperformance/legion-metrics).
-
-* fn: any function that returns a promise. fn might also be an Io.
-* tags: an array of any
-[tags](https://github.com/lane-webperformance/legion-metrics).
+Returns an [Io](https://github.com/lane-webperformance/legion-io)
+that executes the given function while measuring its running time
+and success rate. The carried state of the Io must include a
+[MetricsReceiver](https://github.com/lane-webperformance/legion-metrics)
+in the state.services.metrics field.
 
 instrument.return(value, sample\_data)
 --------------------------------------
@@ -46,7 +43,7 @@ function. As an example:
 	}
 
 Use of this mechanism is optional. It's also possible to throw
-a failure (you can also throw a timeout, or, indeed, even a success):
+a failure or a timeout:
 
 	throw instrument.return.failure(new Error('something bad happened'), custom_metrics);
 
