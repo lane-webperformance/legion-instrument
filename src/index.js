@@ -5,19 +5,14 @@ const metrics = require('legion-metrics');
 const instReturn = require('./return');
 
 function instrument(fn, tags) {
-  return Io.get().chain(state => {
-    if( !metrics.Target.isReceiver(state.services.metrics) )
-      throw new Error('Io state does not provide metrics receiver at state.services.metrics: ' + state.services.metrics);
-
-    let metrics_receiver = state.services.metrics;
-
+  return Io.get().chain(services => {
     if( tags )
-      metrics_receiver = state.services.metrics.tag(tags);
+      services = services.tag(tags);
 
     const begin = Date.now();
     const conclude = (result, default_outcome) => {
       const end = Date.now();
-      metrics_receiver.tag(metrics.tags.outcome[instReturn.getOutcome(result, default_outcome)]).receive(metrics.sample(Object.assign({
+      services.tag(metrics.tags.outcome[instReturn.getOutcome(result, default_outcome)]).receive(metrics.sample(Object.assign({
         duration: metrics.sample.duration(end-begin),
         beginning_timestamp: metrics.sample.timestamp(begin),
         ending_timestamp: metrics.sample.timestamp(end)
