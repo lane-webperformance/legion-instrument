@@ -1,6 +1,6 @@
 {
   "name": "legion-instrument",
-  "version": "0.0.33",
+  "version": "0.0.34",
   "description": "Automatically instrument javascript methods into Legion Io runnables.",
   "main": "src/index.js",
   "scripts": {
