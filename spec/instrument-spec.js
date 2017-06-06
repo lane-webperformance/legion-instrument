@@ -45,17 +45,17 @@ describe('The auto instrument function', function() {
 
     const target = metrics.Target.create(metrics.merge);
 
-    instrument(returnOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); })).then(function(result) {
-      expect(result).toBe(5);
-      const metrics = JSON.parse(JSON.stringify(target.get()));
-      expect(metrics.values.duration.$avg.avg).toBeGreaterThan(1900);
-      expect(metrics.values.duration.$avg.avg).toBeLessThan(2100);
-      expect(metrics.values.beginning_timestamp.$avg.avg).toBeGreaterThan(Date.now()-2100);
-      expect(metrics.values.beginning_timestamp.$avg.avg).toBeLessThan(Date.now()-1900);
-      expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
-      expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
-      done();
-    }).catch(done.fail);
+    instrument(returnOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); }))
+      .then(result => target.get().then(metrics => {
+        expect(result).toBe(5);
+        metrics = JSON.parse(JSON.stringify(metrics));
+        expect(metrics.values.duration.$avg.avg).toBeGreaterThan(1900);
+        expect(metrics.values.duration.$avg.avg).toBeLessThan(2100);
+        expect(metrics.values.beginning_timestamp.$avg.avg).toBeGreaterThan(Date.now()-2100);
+        expect(metrics.values.beginning_timestamp.$avg.avg).toBeLessThan(Date.now()-1900);
+        expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
+        expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
+      })).then(done).catch(done.fail);
   });
 
   it('accepts extra sample data when measuring the time it takes an operation to succeed', function(done) {
@@ -73,14 +73,14 @@ describe('The auto instrument function', function() {
 
     const target = metrics.Target.create(metrics.merge);
 
-    instrument(returnOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); })).then(function(result) {
-      expect(result).toBe(5);
-      const metrics = JSON.parse(JSON.stringify(target.get()));
-      expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
-      expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
-      expect(metrics.values.woofs.$avg.avg).toBe(7);
-      done();
-    }).catch(done.fail);
+    instrument(returnOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); }))
+      .then(result => target.get().then(metrics => {
+        expect(result).toBe(5);
+        metrics = JSON.parse(JSON.stringify(metrics));
+        expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
+        expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
+        expect(metrics.values.woofs.$avg.avg).toBe(7);
+      })).then(done).catch(done.fail);
   });
 
   it('measures the time it takes an operation to fail', function(done) {
@@ -94,18 +94,16 @@ describe('The auto instrument function', function() {
 
     instrument(throwOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); }))
       .then(done.fail)
-      .catch(function(err) {
+      .catch(err => target.get().then(metrics => {
         expect(err.message).toBe('the quick brown fox jumped over the lazy dog');
-        const metrics = JSON.parse(JSON.stringify(target.get()));
+        metrics = JSON.parse(JSON.stringify(metrics));
         expect(metrics.values.duration.$avg.avg).toBeGreaterThan(2000);
         expect(metrics.values.duration.$avg.avg).toBeLessThan(2100);
         expect(metrics.values.beginning_timestamp.$avg.avg).toBeGreaterThan(Date.now()-2100);
         expect(metrics.values.beginning_timestamp.$avg.avg).toBeLessThan(Date.now()-1900);
         expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
         expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
-        done();
-      })
-      .catch(done.fail);
+      })).then(done).catch(done.fail);
   });
 
   it('accepts extra sample data when measuring the time it takes an operation to fail', function(done) {
@@ -125,15 +123,13 @@ describe('The auto instrument function', function() {
 
     instrument(throwOnDelay).run(target.receiver().tag(function(x) { return x.summarize(); }))
       .then(done.fail)
-      .catch(function(err) {
+      .catch(err => target.get().then(metrics => {
         expect(err.message).toBe('the quick brown fox jumped over the lazy dog');
-        const metrics = JSON.parse(JSON.stringify(target.get()));
+        metrics = JSON.parse(JSON.stringify(metrics));
         expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
         expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
         expect(metrics.values.woofs.$avg.avg).toBe(7);
-        done();
-      })
-      .catch(done.fail);
+      })).then(done).catch(done.fail);
   });
 
   it('demands a MetricsReceiver as the state carried by the Io', function(done) {
@@ -157,11 +153,10 @@ describe('The auto instrument function', function() {
 
     const target = metrics.Target.create(metrics.merge);
     
-    iDontCare.run(target.receiver()).then(function() {
-      const metrics = JSON.parse(JSON.stringify(target.get()));
+    iDontCare.run(target.receiver()).then(() => target.get().then(metrics => {
+      metrics = JSON.parse(JSON.stringify(metrics));
       expect(metrics.tags.protocol.foo.values.duration.$avg.size).toBe(1);
-      done();
-    }).catch(done.fail);
+    })).then(done).catch(done.fail);
   });
 
   it('supports tagging via the withTags() function', function(done) {
@@ -173,11 +168,10 @@ describe('The auto instrument function', function() {
 
     const target = metrics.Target.create(metrics.merge);
     
-    fooProtocol(iDontCare).run(target.receiver()).then(function() {
-      const metrics = JSON.parse(JSON.stringify(target.get()));
+    fooProtocol(iDontCare).run(target.receiver()).then(() => target.get().then(metrics => {
+      metrics = JSON.parse(JSON.stringify(metrics));
       expect(metrics.tags.protocol.foo.values.duration.$avg.size).toBe(1);
-      done();
-    }).catch(done.fail);
+    })).then(done).catch(done.fail);
   });
 
   it('supports wrapping functions that accept parameters', function(done) {
@@ -191,13 +185,12 @@ describe('The auto instrument function', function() {
 
     const target = metrics.Target.create(metrics.merge);
     
-    addable(100,200,300,400).run(target.receiver().tag(x => x.summarize())).then(result => {
+    addable(100,200,300,400).run(target.receiver().tag(x => x.summarize())).then(result => target.get().then(metrics => {
       expect(result).toBe(500);
-      const metrics = JSON.parse(JSON.stringify(target.get()));
+      metrics = JSON.parse(JSON.stringify(metrics));
       expect(metrics.values.duration.$avg.avg).toBeGreaterThan(950);
       expect(metrics.values.duration.$avg.avg).not.toBeGreaterThan(1050);
-      done();
-    }).catch(done.fail);
+    })).then(done).catch(done.fail);
   });
 
   it('supports wrapping all methods in an object', function(done) {
