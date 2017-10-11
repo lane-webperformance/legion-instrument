@@ -12,7 +12,12 @@ function instrument(fn, tags) {
     const begin = Date.now();
     const conclude = (result, default_outcome) => {
       const end = Date.now();
-      services.tag(metrics.tags.outcome[instReturn.getOutcome(result, default_outcome)]).receive(metrics.sample(Object.assign({
+      const outcome = instReturn.getOutcome(result, default_outcome);
+
+      if( outcome !== 'success' )
+        services.incrementProblems();
+
+      services.tag(metrics.tags.outcome[outcome]).receive(metrics.sample(Object.assign({
         duration: metrics.sample.duration(end-begin),
         beginning_timestamp: metrics.sample.timestamp(begin),
         ending_timestamp: metrics.sample.timestamp(end)

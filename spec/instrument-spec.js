@@ -55,6 +55,7 @@ describe('The auto instrument function', function() {
         expect(metrics.values.beginning_timestamp.$avg.avg).toBeLessThan(Date.now()-1900);
         expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
         expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
+        expect(target.getProblemCount()).toBe(0);
       })).then(done).catch(done.fail);
   });
 
@@ -80,6 +81,7 @@ describe('The auto instrument function', function() {
         expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
         expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
         expect(metrics.values.woofs.$avg.avg).toBe(7);
+        expect(target.getProblemCount()).toBe(0);
       })).then(done).catch(done.fail);
   });
 
@@ -103,13 +105,14 @@ describe('The auto instrument function', function() {
         expect(metrics.values.beginning_timestamp.$avg.avg).toBeLessThan(Date.now()-1900);
         expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
         expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
+        expect(target.getProblemCount()).toBe(1);
       })).then(done).catch(done.fail);
   });
 
   it('accepts extra sample data when measuring the time it takes an operation to fail', function(done) {
     const throwOnDelay = function() {
       return new Promise(function(_,reject) {
-        setTimeout(function() { reject(instrument.return(new Error('the quick brown fox jumped over the lazy dog'), {
+        setTimeout(function() { reject(instrument.return.failure(new Error('the quick brown fox jumped over the lazy dog'), {
           woofs: {
             value: 7,
             unit: 'megabarks',
@@ -129,6 +132,7 @@ describe('The auto instrument function', function() {
         expect(metrics.values.ending_timestamp.$avg.avg).toBeGreaterThan(Date.now()-100);
         expect(metrics.values.ending_timestamp.$avg.avg).not.toBeGreaterThan(Date.now());
         expect(metrics.values.woofs.$avg.avg).toBe(7);
+        expect(target.getProblemCount()).toBe(1);
       })).then(done).catch(done.fail);
   });
 
@@ -156,6 +160,7 @@ describe('The auto instrument function', function() {
     iDontCare.run(target.receiver()).then(() => target.get().then(metrics => {
       metrics = JSON.parse(JSON.stringify(metrics));
       expect(metrics.tags.protocol.foo.values.duration.$avg.size).toBe(1);
+      expect(target.getProblemCount()).toBe(0);
     })).then(done).catch(done.fail);
   });
 
@@ -171,6 +176,7 @@ describe('The auto instrument function', function() {
     fooProtocol(iDontCare).run(target.receiver()).then(() => target.get().then(metrics => {
       metrics = JSON.parse(JSON.stringify(metrics));
       expect(metrics.tags.protocol.foo.values.duration.$avg.size).toBe(1);
+      expect(target.getProblemCount()).toBe(0);
     })).then(done).catch(done.fail);
   });
 
@@ -190,6 +196,7 @@ describe('The auto instrument function', function() {
       metrics = JSON.parse(JSON.stringify(metrics));
       expect(metrics.values.duration.$avg.avg).toBeGreaterThan(950);
       expect(metrics.values.duration.$avg.avg).not.toBeGreaterThan(1050);
+      expect(target.getProblemCount()).toBe(0);
     })).then(done).catch(done.fail);
   });
 
